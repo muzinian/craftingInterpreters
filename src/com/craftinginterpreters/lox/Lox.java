@@ -11,7 +11,7 @@ import java.util.List;
 //TODO:shell exit code 查询
 public class Lox {
     /*
-    这个字段的作用是为了确保不会执行已经有已知错误的代码
+    这个字段的作用是为了确保不会执行已经有已知错误的代码，并返回非0退出码(读取文件时)。
     而com.craftinginterpreters.lox.Lox.report和com.craftinginterpreters.lox.Lox.error方法放在Lox类的
     主要原因也是要设置这个值
      */
@@ -41,6 +41,7 @@ public class Lox {
             String line = bufferedReader.readLine();
             if (line == null) break;
             run(line);
+            //reset标志，这样就不会退出交互式命令行
             hadError = false;
         }
     }
