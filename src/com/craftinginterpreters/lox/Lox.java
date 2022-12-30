@@ -49,15 +49,24 @@ public class Lox {
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
-        for (Token token : tokens) {
-            System.out.println(token);
-        }
+        Parser parser = new Parser(tokens);
+        Expr expr = parser.parse();
+        if(hadError) return;
+        System.out.println(new AstPrinter().print(expr));
+        
     }
 
     public static void error(int line, String message) {
         report(line, "", message);
     }
 
+    public static void error(Token token,String message){
+        if(token.getType() == TokenType.EOF){
+            report(token.getLine(), "at end", message);
+        }else{
+            report(token.getLine(), "at '" + token.getLexeme() + "'", message);
+        }
+    }
     /*
     好的工程实践是将产生错误的代码和报告错误的代码分离开。
     在解释器前端的各个阶段中，都会检测到错误，但是知道应该

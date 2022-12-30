@@ -16,10 +16,10 @@ var，language，=，"lox"和;都是词素。
 3.位置信息：在错误报告中，解释器需要告诉用户错误的位置信息。位置信息的跟踪就是从这里开始。
  */
 public class Token {
-    final TokenType type;
-    final String lexeme;
-    final Object literal;
-    final int line;
+    private final TokenType type;
+    private final String lexeme;
+    private final Object literal;
+    private final int line;
 
     public Token(TokenType type, String lexeme, Object literal, int line) {
         this.type = type;
@@ -30,5 +30,21 @@ public class Token {
 
     public String toString() {
         return type + " " + lexeme + " " + literal;
+    }
+
+    public TokenType getType() {
+        return type;
+    }
+
+    public String getLexeme() {
+        return lexeme;
+    }
+
+    public Object getLiteral() {
+        return literal;
+    }
+
+    public int getLine() {
+        return line;
     }
 }
