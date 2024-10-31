@@ -16,12 +16,14 @@ public class Lox {
     主要原因也是要设置这个值
      */
     private static boolean hadError = false;
+    private static boolean hadRuntimeError = false;
+    private static Interpreter interpreter = new Interpreter();
     public static void main(String[] args) throws IOException {
         if (args.length > 1) {
             System.out.println("Usage:jlox [script]");
             System.exit(64);
-        } else if (args.length == 1) {
             runFile(args[0]);
+        } else if (args.length == 1) {
         } else {
             runPrompt();
         }
@@ -31,6 +33,7 @@ public class Lox {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
         if(hadError) System.exit(65);
+        if(hadRuntimeError) System.exit(70);
     }
 
     private static void runPrompt() throws IOException {
@@ -50,9 +53,9 @@ public class Lox {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
         Parser parser = new Parser(tokens);
-        Expr expr = parser.parse();
+        List<Stmt> statements = parser.parse();
         if(hadError) return;
-        System.out.println(new AstPrinter().print(expr));
+        interpreter.interpret(statements);
         
     }
 
@@ -62,10 +65,15 @@ public class Lox {
 
     public static void error(Token token,String message){
         if(token.getType() == TokenType.EOF){
-            report(token.getLine(), "at end", message);
+            report(token.getLine(), " at end", message);
         }else{
-            report(token.getLine(), "at '" + token.getLexeme() + "'", message);
+            report(token.getLine(), " at '" + token.getLexeme() + "'", message);
         }
+    }
+
+    public static void runtiemError(RuntimeError error) {
+        System.err.println(error.getMessage() + "\n[line " + error.getToken().getLine() + "]");
+        hadRuntimeError = true; //标记为true，当从文件读取脚本时，如果判断出现错误，就退出代码。
     }
     /*
     好的工程实践是将产生错误的代码和报告错误的代码分离开。

@@ -1,6 +1,6 @@
 ## 解析表达式
 ### 歧义与解析游戏
-给出一个由一系列token组成的字符串，我们将这些token映射为语法中的终结符，查看那个规则可以生成这样的字符串。完全有可能创建一个语法是有 _歧义的_，选择不通的生成式可以得出同样的字符串。解析过程中出现歧义会导致解析器错误的理解用户代码。在我们解析过程中，我们不仅仅判断一个字符串是否是一个合法的Lox代码，我们还需要跟踪字符串每个部分匹配的是哪个规则，这样我们知道每个token属于这个语言的哪个部分。目前，我们有的语法规则如下：
+给出一个由一系列 token 组成的字符串，我们将这些 token 映射为语法中的终结符，查看那个规则可以生成这样的字符串。完全有可能创建一个语法是有 _歧义的_，选择不同的生成式可以得出同样的字符串。解析过程中出现歧义会导致解析器错误的理解用户代码。在我们解析过程中，我们不仅仅判断一个字符串是否是一个合法的 Lox 代码，我们还需要跟踪字符串每个部分匹配的是哪个规则，这样我们知道每个 token 属于这个语言的哪个部分。目前，我们有的语法规则如下：
 ```
 expression → literal
            | unary
@@ -27,11 +27,11 @@ operator   → "=="|"!="|"<"|"<="|">"|">="|"+"|"-"|"*"|"/";
 这两个都产生了相同的 _字符串_，但是，他们不是同一个 _语法树_。换句话说，这个语法允许将表达式看成`(6/3)-1`或者`6/(3-1)`。`binary`允许你以任意的方式嵌套操作数。这接着影响了对解析树估值的结果。这个歧义通过定义规则的优先级和结合性解决了。
 
 * __优先级(Precedence)__ 如果一个表达式总混合了不同的操作符，优先级决定了哪个操作符先估值。优先级告诉我们`/`的估值先于`-`。高优先级的操作符比低优先级的操作符先估值。等价的说法式，高优先级的操作符"绑定的更紧"
-* __结合性(Associativity)__ 在一系列相同的操作符中，哪个操作符先估值。当一个操作符是 __左关联(left-associativity)__(认为是"从左到右")，在左边的操作符比在右边的操作符先执行。因为`-`是左关联的，表达式`5-3-1`等价于`(5-3)-1`而不是`5-(3-1)`。另一方面，赋值是 __右结合(right-associativity)__ 的，表达式`a = b = c`等价于`a = ( b = c)`。
+* __结合性(Associativity)__ 在一系列相同的操作符中，哪个操作符先估值。当一个操作符是 __左结合(left-associativity)__(认为是"从左到右")，在左边的操作符比在右边的操作符先执行。因为`-`是左关联的，表达式`5-3-1`等价于`(5-3)-1`而不是`5-(3-1)`。另一方面，赋值是 __右结合(right-associativity)__ 的，表达式`a = b = c`等价于`a = ( b = c)`。
 
 >有些语言指定了某些操作符之间没有相对的优先级，如果表达式中混合使用了这些操作符却没有显式的分组，就会报告一个语法错误。同样，某些操作符是 __无结合性(non-associative)__。这意味着在一个序列中使用这些操作符超过一次是一个错误。比如，Perl的范围操作就没有结合性，因此`a..b`是对的，但是`a..b..c`是错的。
 
-Lox的优先级跟C语言一样。有了优先级，在使用了多个操作符的表达式中才不会出现歧义。
+Lox 的优先级跟 C 语言一样。有了优先级，在使用了多个操作符的表达式中才不会出现歧义。
 |Name|Operators|Associates|
 |-|-|-|
 |Equality|== !=|Left|
@@ -39,6 +39,7 @@ Lox的优先级跟C语言一样。有了优先级，在使用了多个操作符�
 |Term|- +|Left|
 |Factor|/ *|Left|
 |Unary|! -|Right|
+
 目前，语法将所有表达式类型都塞到了单个`expression`规则中。相同的规则被用来作为非终结的操作数，这允许语法接收任意类型的表达式作为子表达式，无论优先级规则是否允许它的存在。
 
 我们通过修改语法为每个优先级定义分开的规则解决这个问题。
@@ -97,7 +98,7 @@ primary    → NUMBER|STRING|"true"|"false"|"nil"|"(" expression ")";
 这样，我们就消除了之前语法的歧义了。
 
 ### 递归下降解析
-常见的解析技术有 [LL(k)](https://en.wikipedia.org/wiki/LL_parser)，[LR(1)](https://en.wikipedia.org/wiki/LR_parser)和[LALR](https://en.wikipedia.org/wiki/LALR_parser)，使用了像是 [parser combinators](https://en.wikipedia.org/wiki/Parser_combinator)，[Earley parsers](https://en.wikipedia.org/wiki/Earley_parser)，[the shunting yard algorithm](https://en.wikipedia.org/wiki/Shunting-yard_algorithm)和[packrat parsing](https://en.wikipedia.org/wiki/Parsing_expression_grammar)技术。对于我们的解释器，__递归下降(Recursive descent)__ 足够了。
+常见的解析技术有 [LL(k)](https://en.wikipedia.org/wiki/LL_parser)， [LR(1)](https://en.wikipedia.org/wiki/LR_parser)和[ LALR ](https://en.wikipedia.org/wiki/LALR_parser)，使用了像是 [ parser combinators ](https://en.wikipedia.org/wiki/Parser_combinator)，[ Earley parsers ](https://en.wikipedia.org/wiki/Earley_parser)， [the shunting yard algorithm](https://en.wikipedia.org/wiki/Shunting-yard_algorithm)和[ packrat parsing](https://en.wikipedia.org/wiki/Parsing_expression_grammar) 技术。对于我们的解释器，__递归下降(Recursive descent)__ 足够了。
 
 递归下降是构建解析器最简单的方式，不需要使用复杂的解析器生成器工具(比如，Yacc，Bison和ANTLR)。它简单，但是快速，健壮可以支持复杂的错误处理。很多产品级语言实现都是使用的递归下降(GCC,V8,Roslyn)。
 
@@ -108,9 +109,9 @@ primary    → NUMBER|STRING|"true"|"false"|"nil"|"(" expression ")";
 递归下降解析器就是按照语法规则直接翻译为命令式代码。每个规则都会是一个函数。规则体转换为代码大概类似于：
 |语法规则|代码表示|
 |-|-|
-|Terminal|匹配和消费一个token的代码|
-|NonTerminal|调用这个规则的函数|
-|`|`|`if`或者`switch`语句|\
+|Terminal|匹配和消费一个 token 的代码|
+| NonTerminal |调用这个规则的函数|
+|`\|`|`if`或者`switch`语句|
 |`*`或者`+`|`while`或者`for`循环|
 |`?`|`if`语句|
 
@@ -317,23 +318,22 @@ private ParseError error(Token token,String message){
 ```java
 static void error(Token token,String message){
       if(token.type == TokenType.EOF){
-            report(token.line,"at end",message);
+            report(token.line," at end",message);
       }else{
-            report(token.line,"at '" + token.lexeme + "'",message);
+            report(token.line," at '" + token.lexeme + "'",message);
       }
 }
 ```
 `ParseError`继承了`RuntimeException`，我们用它作为哨兵，来unwind解析器。`error()`方法返回这个错误而不是抛出它，因为我们想要让在解析器里面的调用方法决定是否unwind。某些解析错误发生的地方，解析器可能不会进入到奇怪的状态中，这样我们就不需要做同步，如果是这样，我们就简单的报告一下错误，并继续前进。举个例子，Lox限制了函数参数数量，如果你传入了过多的参数，解析器只需要报告这个错误，然后继续解析额外的参数就好了，不需要进入panic模式。
 >另一个处理常见语法错误的方式是 __错误生成式(error production)__。在语法中添加一个规则可以成功匹配 _错误的_ 语法。解析器安全的解析他然后将它报告为一个错误而不是生成一个语法树。比如，Lox不支持一元的`+`操作符，比如`+123`，Lox可以扩展规则为
 >```
->unary → ("!"|"-") unary
+>unary → ("!"|"-"|"+") unary
 >      | primary;
 >```
 >解析器可以正确的消费`+`，而不会进入panic模式或者奇怪的状态中。由于解析器开发人员知道什么代码是错的以及用户可能想要做的是什么，因此它们可以给出更加有用的错误帮助信息，帮助用户回到正确的位置。这使得错误生成式能很好的工作，成熟的解析器倾向于增加错误生成式，从而帮助用户修复常见的错误。
 
 #### 同步一个递归下降解析器
 在递归下降的解析器中，它的状态(即解析器正处于哪个规则的识别中间)没有显式存储在字段中。我们使用`Java`自己的调用栈跟踪解析器正在做什么。每个规则在被解析的中间都是栈上的一个调用帧。重置状态需要清理这些调用栈。在Java中，处理这个问题的一个自然方式就是异常。当我们要同步时，我们抛出一个`ParseError`对象。在更高层的方法(处理我们正要同步的语法规则的方法)中，我们捕获它。因为我们在语句边界处同步，我们就在这里捕获异常。异常捕获后，解析器就位于正确的状态了，剩下的就是同步tokens了。我们会丢弃下一个语句前的所有token，这个边界很容易找到，这也是我们选择它的一个主要原因。在分号后，我们很可能旧结束了一个语句。大多属语句是从一个关键字开始的，`for`，`if`，`return`，`var`等的。当下一个语句是这些中的任意一个，我们可能就开始了一个语句。
->在`for`循环中，我们也可能遇到一个分号，它并没有结束一个语句。
 代码如下：
 ```java
 private void synchronize(){
@@ -357,6 +357,7 @@ private void synchronize(){
       }
 }
 ```
+>在`for`循环中，我们也可能遇到一个分号，它并没有结束一个语句。
 我们丢弃所有tokens直到它认为遇到了一个语句边界。在捕获`ParseError`后，我们调用这个方法并期待回到同步中。当工作结束后，我们已经丢弃了的tokens是可能造成级联错误的tokens，然后我们从新的语句开始解析剩下的文件。
 
 ### 把解析器串起来
@@ -392,7 +393,7 @@ Expr parse(){
 }
 ```
 当前`parse()`只处理单个表达式并返回，后面会增加对语句的处理。它还捕获了`ParseError`，毕竟语法错误恢复是解析器的工作，我们不希望`ParseError`异常逃逸到解释器其他地方。解析器承诺了不会因为无效的语法而崩溃或者假死，但是可以返回`null`。一旦解析器报告了错误，`hadError`就被设置了，后续阶段也就跳过了。
->当然可以设计一个语法比Lox复杂的多的语言，进而使递归下降解析变得不可能。当你需要向前看大量的token才能你属于什么语法的时候，预测解析就很麻烦了。
+>当然可以设计一个语法比Lox复杂的多的语言，进而使递归下降解析变得不可能。当你需要向前看大量的token才能知道属于什么语法的时候，预测解析就很麻烦了。
 >实践中，大多数语言都避免设计成那样。即使万一它们在某些语法上不是那样，依旧可以不用很痛苦的使用hack的方式处理它。如果你可以使用递归下降解析C++，就可以解析任何语言。
 
 ### 设计笔记：逻辑 vs 历史
@@ -406,4 +407,4 @@ if((flags&FLAG_MASK)== SOME_FLAG) {} //right
 但是，很多用户是通过使用他们已经知道的概念来快速的理解我们语言的理念。如果我们的语言使用了和大多数语言一样的语法或者语义，那么用户需要学习的就更少了。这对语法很有帮助。利用用户已知的信息，是你可以用来缓解适应你语言的最重要的工具之一。C语言的位操作符优先级是一个显而易见的错误，但是数百万用户已经熟悉了这个错误。选择内在逻辑而忽略历史，还是选择跟随历史，这没有完美的答案，只有权衡。
 
 ### 笔记
-实现了本章的`Parser`后，会解析`Scanner`产生的tokens。比如说，`1+2`这样的表达式生成Token列表是，`1`,`+`,`2`。`Parser`解析后，会产生一个`BinaryExpr`。注意，此处只会按照语法规则进行匹配。因此，如果代码是`1+12"a"`，`Scanner`产生的Token列表是,`1`,`+`,`12`,`"a"`。 按照语法规则，他会匹配`term`规则。但是，注意，`Parser`依旧会产生一个`BinaryExpr`，不过只包含`1`,`+`,`12`这三个Token。由于当前没有任何规则可以匹配`11`后面跟一个`"a"`这种现象，此时，`"a"`这个token被静默地消费了，但是不产生任何`Expr`。此章，对于这个表达式不会语法错误。
+实现了本章的`Parser`后，会解析`Scanner`产生的tokens。比如说，`1+2`这样的表达式生成Token列表是，`1`,`+`,`2`。`Parser`解析后，会产生一个`BinaryExpr`。注意，此处只会按照语法规则进行匹配。因此，如果代码是`1+12"a"`，`Scanner`产生的Token列表是,`1`,`+`,`12`,`"a"`。 按照语法规则，他会匹配`term`规则。但是，注意，`Parser`依旧会产生一个`BinaryExpr`，不过只包含`1`,`+`,`12`这三个Token。由于当前没有任何规则可以匹配`12`后面跟一个`"a"`这种现象，此时，`"a"`这个token被静默地消费了，但是不产生任何`Expr`。此章，对于这个表达式不会语法错误。

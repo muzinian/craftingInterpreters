@@ -227,7 +227,7 @@ public class Scanner {
     由于要越过十进制点查看，因此我们需要向前看第二个字符，因为除非我们确认'.'后面有一个数字，否则我们不想消费'.'，
     因此，需要一个peekNext方法。
     最后，我们转换整个词素为它的数字值。
-    注意：书中的scanner本身会把11a这种拆分为 11 和 a。其中11是数字而a是标识符。scanner不处理这个问题，他会持续消费文件
+    注意：书中的scanner本身会把11a这种拆分为 11 和 a。其中11是数字而a是标识符。scanner不处理这个问题，他会持续消费输入
      */
     private void number() {
         while(isDigit(peek())) advance();
@@ -238,7 +238,7 @@ public class Scanner {
         addToken(TokenType.NUMBER,Double.parseDouble(source.substring(start,current)));
     }
 
-    //标识符字符或者_开始
+    //标识符以英文字符或者_开始
     private boolean isAlpha(char c) {
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_');
     }

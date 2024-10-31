@@ -1,8 +1,11 @@
 package com.craftinginterpreters.lox;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import com.craftinginterpreters.lox.Stmt.Print;
 
 /*
  * 当前是Parsing Expressions一章的内容
@@ -45,17 +48,63 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    public Expr parse(){
+    public List<Stmt> parse(){
+        List<Stmt> statements = new ArrayList<>();
+        while(!isAtEnd()){
+            statements.add(declaration());
+        }
+        return statements;
+    } 
+
+    private Stmt declaration(){
         try{
-            return expression();
+            if(match(TokenType.VAR)) return varDeclaration();
+            return statement();
         }catch(ParseError error){
-            //语法错误恢复是parser需要处理的，所以在这里要catch，不传播给解释器其他地方
-            //parser承诺了在遇到错误不会crash/hang，但是不保证返回可用的语法树
-            //只要parser报告了错误，设置了hadError，后续阶段就被跳过了
-            //设置hadError就在调用了Lox的error方法，里面的report设置了它
+            synchronize();
             return null;
         }
-    } 
+    }
+
+    private Stmt varDeclaration(){
+        Token name = consume(TokenType.IDENTIFIER,"Expected variable name.");
+        Expr initializer = null;
+        if(match(TokenType.EQUAL)){
+            initializer = expression();
+        }
+        consume(TokenType.SEMICOLON, "Expected ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
+    }
+
+
+    private Stmt statement() {
+        if(match(TokenType.PRINT)) return printStatement();
+        if(match(TokenType.LEFT_BRACE)) return new Stmt.Block(block());
+        return expressionStatement();
+    }
+
+    private Stmt printStatement(){
+        Expr value = expression();
+        consume(TokenType.SEMICOLON, "Expected ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    private Stmt expressionStatement(){
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expected ';' after value.");
+        return new Stmt.Expression(expr);
+    }
+
+    private List<Stmt> block(){
+        List<Stmt> statements = new ArrayList<>();
+        while(!check(TokenType.RIGHT_BRACE) && !isAtEnd()){
+            statements.add(declaration());
+        }
+        consume(TokenType.RIGHT_BRACE,"Expect '}' after block.");
+        return statements;
+    }
+
+
 
     /*
      * 解析规则的方式是：
@@ -67,7 +116,7 @@ public class Parser {
      */
     // parse expression rule
     private Expr expression() {
-        return equality();
+        return assignment();
     }
 
     // 二元操作符的规则都是类似的，左边是更高优先级的操作符规则，中间是操作符，右边是更高优先级的操作符规则
@@ -126,6 +175,26 @@ public class Parser {
     // 返回最近消费过的token
     private Token previous() {
         return tokens.get(current - 1);
+    }
+
+    /*
+     * 这里处理按照表达式正常解析，当遇到了=，就认为它是赋值操作符，然后将解析右边，最终组装起来整个结果为复制表达式树节点
+     * 这里使用递归而不是循环处理右结合的赋值表达式的右手侧。并且，
+     */
+    private Expr assignment(){
+        Expr expr = equality();
+        if(match(TokenType.EQUAL)){
+            Token equals = previous();
+            Expr value = assignment();
+
+            if(expr instanceof Expr.Variable){
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
+            }
+            error(equals,"Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     // parse equality rule "equality -> comparison(("!="|"=="")comparison)*;"
@@ -210,6 +279,10 @@ public class Parser {
             Expr expr = expression();
             consume(TokenType.RIGHT_PAREN, "Expect ')' after expression");
             return new Expr.Grouping(expr);
+        }
+
+        if(match(TokenType.IDENTIFIER)){
+            return new Expr.Variable(previous());
         }
 
         //此时，是一个无法开启一个表达式的token
