@@ -391,7 +391,7 @@ class Environment{
     throw new RuntimeError(name,"Undefined variable '" + name.lexeme + "'.");
 }
 ```
-#### 快语法和语义
+#### 块语法和语义
 ```
 statement → exprStmt
           | printStmt
